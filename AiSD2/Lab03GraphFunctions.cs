@@ -172,7 +172,7 @@ namespace ASD
                     int u = stack.Pop();
                     foreach (int neigh in g.OutNeighbors(u))
                     {
-                        if (visitedFrom[neigh] == u)
+                        if (visitedFrom[neigh] == u || visitedFrom[u] == neigh)
                             continue;
                         if (visited[neigh])
                             return false;
