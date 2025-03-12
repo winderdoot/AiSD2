@@ -2,6 +2,7 @@
 using ASD.Graphs;
 using ASD;
 using System.Collections.Generic;
+using System.Numerics;
 
 namespace ASD
 {
@@ -152,9 +153,36 @@ namespace ASD
         //   2) Najpierw pomysleć jaki, prosty do sprawdzenia, warunek spełnia acykliczny graf nieskierowany
         //      Zakodowanie tego sprawdzenia nie powinno zająć więcej niż kilka linii!
         //      Zadanie jest bardzo łatwe (jeśli wydaje się trudne - poszukać prostszego sposobu, a nie walczyć z trudnym!)
+
         public bool Lab03IsUndirectedAcyclic(Graph g)
         {
-            return false;
+            int N = g.VertexCount;
+            Stack<int> stack = new Stack<int>();
+            bool[] visited = new bool[N];
+            int[] visitedFrom = new int[N];
+            Array.Fill(visitedFrom, -1);
+            for (int v = 0; v < N; v++)
+            {
+                if (visited[v])
+                    continue;
+                stack.Push(v);
+                visited[v] = true;
+                while (stack.Count != 0)
+                {
+                    int u = stack.Pop();
+                    foreach (int neigh in g.OutNeighbors(u))
+                    {
+                        if (visitedFrom[neigh] == u)
+                            continue;
+                        if (visited[neigh])
+                            return false;
+                        visited[neigh] = true;
+                        visitedFrom[neigh] = u;
+                        stack.Push(neigh);
+                    }
+                }
+            }
+            return true;
         }
 
     }
