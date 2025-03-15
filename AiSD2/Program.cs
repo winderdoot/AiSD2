@@ -15,7 +15,7 @@ namespace ASD
 
         static bool maskExceptions = false;
 
-        static void Main(string[] args)
+        static void MainLab3(string[] args)
         {
             Console.WriteLine("\nPart 1 - Reverse");
             TestReverse();
