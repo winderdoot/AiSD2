@@ -124,6 +124,32 @@ namespace ASD
         }
 
         /// <summary>
+        /// Used to determine the earliest day a server could be infected by a neighbor given, the range of days the neighbors was sick and the range of days the server was closed down.
+        /// </summary>
+        /// <returns>The smallest value inside range1 that is outside of range2. K + 1 if such a value doesn't exist.</returns>
+        static int SmallestOutside(int neighSickFirst, int neighSickLast, int servOffFirst, int servOffLast, int K)
+        {
+            if (servOffFirst <= neighSickFirst && neighSickLast <= servOffLast)
+            {
+                return K + 1;
+            }
+            if (neighSickLast <= servOffLast && neighSickLast >= servOffFirst) // The sick range intersects butt is off to the left
+            {
+                return servOffFirst - 1;
+            }
+            if (neighSickLast > servOffLast)
+            {
+                if (neighSickFirst < servOffFirst)
+                {
+                    return servOffFirst - 1;
+                }
+                return servOffLast + 1;
+            }
+            // Now the entire sick range is to the left side of off range
+            return neighSickFirst;
+        }
+
+        /// <summary>
         /// Etap 3 - Wyznaczenie liczby oraz listy zainfekowanych serwisów z możliwością ponownego włączenia wyłączonych serwisów.
         /// Algorytm analizuje propagację infekcji uwzględniając serwisy, które mogą być ponownie uruchamiane po określonym czasie.
         /// </summary>
@@ -150,34 +176,53 @@ namespace ASD
                 queue.Enqueue((s[i], 1));
                 infecDay[s[i]] = 1;
             }
+            int[] firstPeriod = [-1, -1]; // [pierwszy dzien w ktorym mozna zarazic, ostatni dzien w ktorym mozna zarazic]
+            int[] secondPeriod = [-1, -1];
+            int[] offPeriod = [-1, -1];
+
             while (queue.Count != 0)
             {
                 var pair = queue.Dequeue();
                 int ver = pair.Item1;
                 int dayOfInfec = pair.Item2;
-                int currDay = -1;
+                // Zależnie od serwery, mogą być max 2 okresy w których będzie on mógł zarażać inne serwery
+                // 1) Od następnego dnia do dnia przed wyłączeniem (może być to okres pusty)
+                // 2) Od poranka po włączeniu do dnia K-tego włącznie
+                secondPeriod[0] = serviceTurnonDay[ver] + 1;
+                secondPeriod[1] = Math.Max(secondPeriod[0], K);
                 if (dayOfInfec + 1 < serviceTurnoffDay[ver])
                 {
-                    currDay = dayOfInfec + 1;
-                    for (int d = currDay + 1; d < serviceTurnonDay[ver]; d++)
+                    firstPeriod[0] = dayOfInfec + 1;
+                    if (serviceTurnoffDay[ver] - 1 < firstPeriod[0])
                     {
-                        queue.Enqueue((ver, d));
+                        firstPeriod[0] = K + 1;
+                        firstPeriod[1] = K + 1;
+                    }
+                    else
+                    {
+                        firstPeriod[1] = serviceTurnoffDay[ver] - 1;
                     }
                 }
                 else
                 {
-                    currDay = serviceTurnonDay[ver] + 1;
+                    firstPeriod[0] = K + 1;
+                    firstPeriod[1] = K + 1;
                 }
-                if (currDay >= K + 1)
+                if (firstPeriod[0] >= K + 1 && secondPeriod[0] >= K + 1)
                     continue;
                 foreach (int neig in G.OutNeighbors(ver))
                 {
-                    if (infecDay[neig] != -1 && infecDay[neig] <= currDay)
+                    offPeriod[0] = serviceTurnoffDay[neig];
+                    offPeriod[1] = serviceTurnonDay[neig];
+                    int earliestInfecDay = SmallestOutside(firstPeriod[0], firstPeriod[1], offPeriod[0], offPeriod[1], K);
+                    earliestInfecDay = Math.Min(earliestInfecDay, SmallestOutside(secondPeriod[0], secondPeriod[1], offPeriod[0], offPeriod[1], K));
+                    // Find the first day on which the neighbor can be infected by the 'u' server
+                    if (earliestInfecDay >= K + 1)
                         continue;
-                    if (currDay >= serviceTurnoffDay[neig] && currDay <= serviceTurnonDay[neig])
+                    if (infecDay[neig] != -1 && infecDay[neig] <= earliestInfecDay)
                         continue;
-                    infecDay[neig] = currDay;
-                    queue.Enqueue((neig, currDay));
+                    infecDay[neig] = earliestInfecDay;
+                    queue.Enqueue((neig, earliestInfecDay));
                 }
             }
             int count = 0;
