@@ -447,13 +447,12 @@ namespace ASD
     {
         static void Main(string[] args)
         {
-            //var tests = new Lab04Tests();
-            //tests.PrepareTestSets();
-            //foreach (var ts in tests.TestSets)
-            //{
-            //    ts.Value.PerformTests(verbose: true, checkTimeLimit: false);
-            //}
-            Graph g = new Graph
+            var tests = new Lab04Tests();
+            tests.PrepareTestSets();
+            foreach (var ts in tests.TestSets)
+            {
+                ts.Value.PerformTests(verbose: true, checkTimeLimit: false);
+            }
         }
     }
 }

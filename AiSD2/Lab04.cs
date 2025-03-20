@@ -176,7 +176,7 @@ namespace ASD
         /// numberOfInfectedServices: liczba zainfekowanych serwisów,
         /// listOfInfectedServices: tablica zawierająca numery zainfekowanych serwisów w kolejności rosnącej.
         /// </returns>
-        public (int numberOfInfectedServices, int[] listOfInfectedServices) Stage3(Graph G, int K, int[] s, int[] serviceTurnoffDay, int[] serviceTurnonDay)
+        public (int numberOfInfectedServices, int[] listOfInfectedServices) Stage3_1(Graph G, int K, int[] s, int[] serviceTurnoffDay, int[] serviceTurnonDay)
         {
             int n = G.VertexCount;
             int m = G.EdgeCount;
@@ -202,7 +202,7 @@ namespace ASD
                 var pair = queue.Dequeue();
                 int ver = pair.Item1;
                 int dayOfInfec = pair.Item2;
-                // Zależnie od serwery, mogą być max 2 okresy w których będzie on mógł zarażać inne serwery
+                // Zależnie od serwera, mogą być max 2 okresy w których będzie on mógł zarażać inne serwery
                 // 1) Od następnego dnia do dnia przed wyłączeniem (może być to okres pusty)
                 // 2) Od poranka po włączeniu do dnia K-tego włącznie
                 secondPeriod[0] = Math.Max(serviceTurnonDay[ver] + 1, dayOfInfec + 1);
@@ -259,5 +259,113 @@ namespace ASD
             }
             return (count, infList);
         }
+
+        public (int numberOfInfectedServices, int[] listOfInfectedServices) Stage3(Graph G, int K, int[] s, int[] serviceTurnoffDay, int[] serviceTurnonDay)
+        {
+            int n = G.VertexCount;
+            int m = G.EdgeCount;
+            int p = s.Length;
+            List<int>[] infectedOnDay = new List<int>[K + 1]; // Na zerze nie ma nic, w indeksie i-tym lista zarażonych w itym dniu
+            for (int i = 1; i < K + 1; i++)
+            {
+                infectedOnDay[i] = new List<int>();
+            }
+            bool[] infected = new bool[n]; // Czy serwis i-ty został zainfekowany
+            for (int i = 0; i < n; i++)
+            {
+                infected[i] = false;
+            }
+            for (int i = 0; i < s.Length; i++)
+            {
+                infected[s[i]] = true;
+                infectedOnDay[1].Add(s[i]);
+            }
+            for (int day = 1; day < K + 1; day++) // Bierzemy wierzchiołki zainfekowane w dniu: 'day' i patrzymy na day + 1
+            {
+                for (int i = 0; i < infectedOnDay[day].Count; i++)
+                {
+                    int father = infectedOnDay[day][i];
+                    int nextDay = day + 1;
+                    if (nextDay > K)
+                        continue;
+                    foreach (int child in G.OutNeighbors(father))
+                    {
+                        if (infected[child]) // Jeśli dziecko już zainfekowane, można pominąć
+                        {
+                            continue;
+                        }
+                        if (nextDay < serviceTurnoffDay[father] || nextDay > serviceTurnonDay[father]) //Ojciec nie śpi dzień po
+                        {
+                            if (nextDay < serviceTurnoffDay[child] || nextDay > serviceTurnonDay[child]) // Dziecko nie śpi dzień po
+                            {
+                                infectedOnDay[nextDay].Add(child);
+                                infected[child] = true;
+                                continue;
+                            }
+                            // Dziecko śpi dzień po:
+                            int childAwakeDay = serviceTurnonDay[child] + 1; // już działa tu
+                            if (childAwakeDay > K) // Już nikt ojciec nie może go zarazić
+                            {
+                                continue;
+                            }
+                            if (childAwakeDay < serviceTurnoffDay[father] || childAwakeDay > serviceTurnonDay[father]) // Ojciec nie śpi w chwili wybudzenia dziecka
+                            {
+                                infectedOnDay[childAwakeDay].Add(child);
+                                infected[child] = true;
+                                continue;
+                            }
+                            // Rodzic śpi w chwili wybudzenia dziecka, sprawdźmy czy zdąży się wybudzić przed (k + 1)-szym dniem
+                            if (serviceTurnonDay[father] < K)
+                            {
+                                infectedOnDay[serviceTurnonDay[father] + 1].Add(child);
+                                infected[child] = true;
+                                continue;
+                            }
+                        }
+                        // Ojciec śpi dzień po
+                        int fatherAwakeDay = serviceTurnonDay[father] + 1;
+                        if (fatherAwakeDay > K) // Już nie zdąży tego dziecka zarazić
+                        {
+                            continue;
+                        }
+                        if (fatherAwakeDay < serviceTurnoffDay[child] || fatherAwakeDay > serviceTurnonDay[child]) // Dziecko nie śpi w chwili wybudzenia ojca
+                        {
+                            infectedOnDay[fatherAwakeDay].Add(child);
+                            infected[child] = true;
+                            continue;
+                        }
+                        // Dziecko śpi w chwili wybudzenia ojca, sprawdźmy czy zdąży się wybudzić:
+                        if (serviceTurnonDay[child] < K)
+                        {
+                            infectedOnDay[serviceTurnonDay[child] + 1].Add(child);
+                            infected[child] = true;
+                            continue;
+                        }
+                        
+                    }
+                }
+            }
+
+            int count = 0;
+            for (int i = 0; i < n; i++)
+            {
+                if (infected[i])
+                {
+                    count++;
+                }
+            }
+
+            int[] infList = new int[count];
+            int ind = 0;
+            for (int v = 0; v < n; v++)
+            {
+                if (infected[v])
+                {
+                    infList[ind++] = v;
+                }
+            }
+            return (count, infList);
+        }
+
     }
 }
