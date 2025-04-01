@@ -45,17 +45,35 @@ namespace ASD
             return (t, l, pathInfo.GetPath(s, t).ToArray());
         }
 
-        /// <summary>Etap II</summary>
-        /// <param name="G">Graf opisujący połączenia szlakami turystycznymi z podanym czasem przejścia krawędzi w wadze.</param>
-        /// <param name="C">Graf opisujący koszty przejścia krawędziami w grafie G.</param>
-        /// <param name="waitTime">Czas oczekiwania Studenta-Podróżnika w danym wierzchołku.</param>
-        /// <param name="s">Wierzchołek startowy (początek trasy).</param>
-        /// <param name="t">Wierzchołek końcowy (koniec trasy).</param>
-        /// <returns>Pierwszy element krotki to długość trasy w minutach. Drugi element to koszt przebycia trasy w złotych. Trzeci element to droga będąca rozwiązaniem: sekwencja odwiedzanych wierzchołków (zawierająca zarówno wierzchołek początkowy, jak i końcowy). Jeśli szukana trasa nie istnieje, funkcja zwraca `null`.</returns>
+        public class TupleComparer : Comparer<(int, int)>
+        {
+            public override int Compare((int, int) tup1, (int, int) tup2)
+            {
+                if (tup1.Item1 < tup2.Item1)
+                {
+                    return -1;
+                }
+                if (tup1.Item1 > tup2.Item1)
+                {
+                    return 1;
+                }
+                // Teraz koszty są równe i trzeba porównać po odległości
+                if (tup1.Item2 < tup2.Item2)
+                {
+                    return -1;
+                }
+                if (tup1.Item2 > tup2.Item2)
+                {
+                    return 1;
+                }
+                return 0;
+            }
+        }
+
         public (int l, int c, int[] path)? Stage2(DiGraph<int> G, Graph<int> C, int[] waitTime, int s, int t)
         {
             int N = G.VertexCount;
-            PriorityQueue<int, int> queue = new PriorityQueue<int, int>(N); //(min cena, wierzchołek)
+            PriorityQueue<(int, int), int> queue = new PriorityQueue<(int, int), int>(new TupleComparer(), N); //((cena, odległość), wierzchołek)
             int[] price = new int[N];
             int[] dist = new int[N];
             int[] cameFrom = new int[N];
@@ -74,7 +92,7 @@ namespace ASD
                 newG.AddEdge(e.From, e.To, w);
             }
 
-            queue.Insert(s, 0);
+            queue.Insert(s, (0, 0));
             price[s] = 0;
             dist[s] = 0;
             while (queue.Count > 0)
@@ -89,14 +107,14 @@ namespace ASD
                         cameFrom[nei] = u;
                         price[nei] = price[u] + c;
                         dist[nei] = dist[u] + w;
-                        queue.Insert(nei, price[nei]);
+                        queue.Insert(nei, (price[nei], dist[nei]));
                     }
                     else if (price[nei] == price[u] + c && dist[nei] > dist[u] + w)
                     {
                         //price[nei] = price[u] + c;
                         cameFrom[nei] = u;
                         dist[nei] = dist[u] + w;
-                        queue.Insert(nei, price[nei]);
+                        queue.Insert(nei, (price[nei], dist[nei]));
                     }
                 }
             }
