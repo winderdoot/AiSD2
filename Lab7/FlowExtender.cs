@@ -5,6 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+// zrobić te zadanka i pomyśleć jak zrobić zadanka
+// z poprzednich lat też jeśli będzie czas
+
 namespace ASD
 {
     public static class FlowExtender
@@ -70,7 +73,18 @@ namespace ASD
         /// <returns>spójność krawędziowa</returns>
         public static int EdgeConnectivity(this Graph<double> undirectedGraph, out Edge<double>[] cutingSet)
         {
-            cutingSet = null;
+            int N = undirectedGraph.VertexCount;
+            int s = 0; // wybrany dowolnie
+            double smallestCut = double.MaxValue;
+            Edge<double>[] cutSet;
+            for (int v = 1; v < N; v++)
+            {
+                var minCut = MinCut(undirectedGraph, s, v, out cutingSet);
+                if (minCut < smallestCut)
+                {
+                    //podmiana
+                }
+            }
             return 0;
         }
         
