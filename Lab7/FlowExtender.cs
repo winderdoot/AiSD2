@@ -73,19 +73,19 @@ namespace ASD
         /// <returns>spójność krawędziowa</returns>
         public static int EdgeConnectivity(this Graph<double> undirectedGraph, out Edge<double>[] cutingSet)
         {
-            int N = undirectedGraph.VertexCount;
-            int s = 0; // wybrany dowolnie
-            double smallestCut = double.MaxValue;
-            Edge<double>[] cutSet;
-            for (int v = 1; v < N; v++)
-            {
-                var minCut = MinCut(undirectedGraph, s, v, out cutingSet);
-                if (minCut < smallestCut)
-                {
-                    //podmiana
-                }
-            }
-            return 0;
+            //int N = undirectedGraph.VertexCount;
+            //int s = 0; // wybrany dowolnie
+            //double smallestCut = double.MaxValue;
+            //Edge<double>[] cutSet;
+            //for (int v = 1; v < N; v++)
+            //{
+            //    var minCut = MinCut(undirectedGraph, s, v, out cutingSet);
+            //    if (minCut < smallestCut)
+            //    {
+            //        //podmiana
+            //    }
+            //}
+            //return 0;
         }
         
     }
